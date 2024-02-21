@@ -43,9 +43,10 @@
 ///////////////////////////////////////////
 
 // UNCOMMENT TO SELECT THE NIST SECURITY LEVEL 1, 3 OR 5:
-#define PARAM64 // NIST LEVEL 1
+// #define PARAM64 // NIST LEVEL 1
 // #define PARAM96 // NIST LEVEL 3
 // #define PARAM128 // NIST LEVEL 5
+#define PARAMTEST // 参数测试
 
 // UNCOMMENT TO ENABLE BANDWIDTH OPTIMISATION FOR BIKE-3:
 //#define BANDWIDTH_OPTIMIZED
@@ -81,6 +82,15 @@
 #define NbIter 5
 // LEVEL-1 security parameters:
 #elif defined(PARAM64)
+#define R_BITS 12323ULL
+#define DV     71ULL
+#define T1     134ULL
+#define VAR_TH_FCT(x) (MAX(13.530 + 0.0069722 * (x), 36))
+// Parameters for BGF Decoder:
+#define tau 3
+#define NbIter 5
+#elif defined(PARAMTEST)
+// 修改以下参数
 #define R_BITS 12323ULL
 #define DV     71ULL
 #define T1     134ULL
