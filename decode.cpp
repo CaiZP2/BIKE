@@ -37,6 +37,7 @@
 
 #include "decode.h"
 #include "utilities.h"
+#include "threshold.h"
 
 #include "kem.h"
 #include "sampling.h"
@@ -268,7 +269,6 @@ int BGF_decoder(uint8_t e[R_BITS*2],
         memset(gray, 0, R_BITS*2);
 
         uint32_t T = floor(VAR_TH_FCT(getHammingWeight(s, R_BITS)));
-
         BFIter(e, black, gray, s, T, h0_compact, h1_compact, h0_compact_col, h1_compact_col);
 
         if (i == 1)

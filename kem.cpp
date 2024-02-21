@@ -44,12 +44,12 @@
 #include "decode.h"
 #include "sampling.h"
 #include "kem.h"
-#include "conversions.h"
 #include "shake_prng.h"
+#include "conversions.h"
 
 // Function H. It uses the extract-then-expand paradigm based on SHA384 and
 // AES256-CTR PRNG to produce e from m.
-_INLINE_ status_t functionH(
+status_t functionH(
         OUT uint8_t * e,
         IN const uint8_t * m)
 {
@@ -71,7 +71,7 @@ _INLINE_ status_t functionH(
 }
 
 // Function L. Computes L(e0 || e1)
-_INLINE_ status_t functionL(
+status_t functionL(
         OUT uint8_t * output,
         IN const uint8_t * e)
 {
@@ -91,7 +91,7 @@ _INLINE_ status_t functionL(
 }
 
 // Function K. Computes K(m || c0 || c1).
-_INLINE_ status_t functionK(
+status_t functionK(
         OUT uint8_t * output,
         IN const uint8_t * m,
         IN const uint8_t * c0,
@@ -337,3 +337,127 @@ int crypto_kem_dec(OUT unsigned char *ss,
     return res;
 }
 
+int crypto_pke_keygen(OUT unsigned char *pk, OUT unsigned char *sk)
+{
+    // 类型转换
+    sk_t* l_sk = (sk_t*)sk;
+    pk_t* l_pk = (pk_t*)pk;
+
+    // return code
+    status_t res = SUCCESS;
+
+    //For NIST DRBG_CTR
+    //初始化哈希算法的随机种子
+    double_seed_t seeds = {0};
+    shake256_prng_state_t h_prng_state = {0};
+
+    //Get the entropy seeds
+    get_seeds(&seeds, KEYGEN_SEEDS);
+
+    // BIKE-PKE
+    // sk = (h0, h1)
+    uint8_t * h0 = l_sk->val0;
+    uint8_t * h1 = l_sk->val1;
+    // uint8_t * sigma = l_sk->sigma;
+
+    uint8_t inv_h0[R_SIZE] = {0};
+
+    DMSG("  Enter crypto_pke_keygen.\n");
+    DMSG("    Calculating the secret key.\n");
+
+    // 哈希初始化
+    shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
+    // 利用哈希随机生成私钥
+    res = generate_sparse_rep_keccak(h0, DV, R_BITS, &h_prng_state); CHECK_STATUS(res);
+    res = generate_sparse_rep_keccak(h1, DV, R_BITS, &h_prng_state); CHECK_STATUS(res);
+
+    // use the second seed as sigma
+    // memcpy(sigma, seeds.s2.raw, ELL_SIZE);
+
+    DMSG("    Calculating the public key.\n");
+
+    // pk = (1, h1*h0^(-1)), the first pk component (1) is implicitly assumed
+    // 公钥生成
+    ntl_mod_inv(inv_h0, h0);
+    ntl_mod_mul(l_pk->val, h1, inv_h0);
+
+    EDMSG("h0: "); print((uint64_t*)l_sk->val0, R_BITS);
+    EDMSG("h1: "); print((uint64_t*)l_sk->val1, R_BITS);
+    EDMSG("h: "); print((uint64_t*)l_pk->val, R_BITS);
+    EDMSG("sigma: "); print((uint64_t*)l_sk->sigma, ELL_BITS);
+
+    EXIT:
+    DMSG("  Exit crypto_pke_gen.\n");
+    return res;
+}
+
+int crypto_pke_enc(OUT unsigned char *ct, IN unsigned char *e, IN unsigned char *pk)
+{
+    DMSG("  Enter crypto_pke_enc.\n");
+
+    //Convert to these implementation types
+    //类型转换
+    pk_t* l_pk = (pk_t*)pk;
+    ct_t* l_ct = (ct_t*)ct;
+
+    status_t res = SUCCESS;
+
+    // error vector:
+    // 向量e的e0 e1两部分
+    uint8_t e0[R_SIZE] = {0};
+    uint8_t e1[R_SIZE] = {0};
+    // 将明文转换后的向量e拆为e0 e1
+    ntl_split_polynomial(e0, e1, e);
+
+    // ct = (c0, c1) = (e0 + e1*h, L(e0, e1) \XOR m)
+    // BIKE-PKE中只需用到c0部分 c0 = e0 + e1*h
+    ntl_mod_mul(l_ct->val0, e1, l_pk->val);
+    ntl_add(l_ct->val0, l_ct->val0, e0);
+
+    EXIT:
+    DMSG("  Exit crypto_pke_enc.\n");
+    return res;
+}
+
+int crypto_pke_dec(OUT unsigned char *e, IN unsigned char *ct, IN unsigned char *sk)
+{
+    DMSG("  Enter crypto_pke_dec.\n");
+
+    // convert to this implementation types
+    // 类型转换
+    sk_t* l_sk = (sk_t*)sk;
+    ct_t* l_ct = (ct_t*)ct;
+
+    status_t res = SUCCESS;
+
+    uint32_t h0_compact[DV] = {0};
+    uint32_t h1_compact[DV] = {0};
+   
+    uint8_t e_tmp1[R_BITS*2] = {0};
+
+    // 表示解码成功失败与否
+    int rc;
+
+    // 私钥中1的位置信息，主要用于BGF解码算法提供临界依据
+    DMSG("  Converting to compact rep.\n");
+    convert2compact(h0_compact, l_sk->val0);
+    convert2compact(h1_compact, l_sk->val1);
+
+    DMSG("  Computing s.\n");
+    syndrome_t syndrome;
+
+    // Step 1. computing syndrome:
+    // ct->val0*h0 = (e0 + e1*h1*inv_h0)*h0 = e0*h0 + e1*h1
+    res = compute_syndrome(&syndrome, l_ct, l_sk); CHECK_STATUS(res);
+
+    // Step 2. decoding:
+    // decode(e0*h0+e1*h1, h0, h1)
+    DMSG("  Decoding.\n");
+    rc = BGF_decoder(e_tmp1, syndrome.raw, h0_compact, h1_compact);
+    // 将二进制表示转为字节表示的e
+    convertBinaryToByte(e, e_tmp1, 2*R_BITS);
+
+    EXIT:
+    DMSG("  Exit crypto_kem_dec.\n");
+    return res;
+}

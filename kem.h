@@ -68,6 +68,20 @@ _INLINE_ void get_seeds(OUT double_seed_t* seeds, seeds_purpose_t seeds_type)
     EDMSG("s2: "); print(seeds->s2.qwords, sizeof(seed_t)*8);
 }
 
+status_t functionH(
+        OUT uint8_t * e,
+        IN const uint8_t * m);
+
+status_t functionL(
+        OUT uint8_t * output,
+        IN const uint8_t * e);
+
+status_t functionK(
+        OUT uint8_t * output,
+        IN const uint8_t * m,
+        IN const uint8_t * c0,
+        IN const uint8_t * c1);
+
 ////////////////////////////////////////////////////////////////
 //Below three APIs (keygen, encaps, decaps) are defined by NIST:
 ////////////////////////////////////////////////////////////////
@@ -89,6 +103,15 @@ int crypto_kem_dec(OUT unsigned char *ss,
         IN const unsigned char *ct,
         IN const unsigned char *sk);
 
+// 以下函数用于BIKE-PKE
+// keygen密钥生成 - pk 公钥, sk 私钥
+int crypto_pke_keygen(OUT unsigned char *pk, OUT unsigned char *sk);
+// encrypt加密 - ct 密文, e 明文转换后的向量, pk 公钥
+// 在调用此加密算法前，需提前将明文转为符合要求的向量e，向量e为字节表示，ct->val0为字节表示
+int crypto_pke_enc(OUT unsigned char *ct, IN unsigned char *e, IN unsigned char *pk);
+// decrypt解密 - e 明文, ct 密文, sk 私钥
+// 利用sk将ct->val0解密并存进向量e中，向量e为字节表示，ct->val0为字节表示
+int crypto_pke_dec(OUT unsigned char *e, IN unsigned char *ct, IN unsigned char *sk);  
 
 #endif //__KEM_H_INCLUDED__
 

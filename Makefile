@@ -15,7 +15,7 @@ VERBOSE=0
 CC:=g++
 CFLAGS:=-m64 -O3
 
-SRC:=*.c ntl.cpp FromNIST/rng.c
+SRC:=*.c *.cpp FromNIST/rng.c
 INCLUDE:=-I. -I$(OpenSSL)/include -L$(OpenSSL)/lib -std=c++11 -lcrypto -lssl -lm -ldl -lntl -lgmp -lgf2x -lpthread
 
 all: bike-nist-kat
