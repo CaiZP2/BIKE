@@ -50,6 +50,7 @@ static double counters_C1(size_t n, size_t d, size_t w, size_t S, size_t t,
                           double x);
 
 /* $lnbino(n, t) = \ln {n \choose t}$ */
+// C(n,t) 组合数取自然对数
 static double lnbino(size_t n, size_t t) {
     if ((t == 0) || (n == t))
         return 0.0;
@@ -66,10 +67,11 @@ static double xlny(double x, double y) {
 
 /* Log of the probability mass function of a binomial distribution:
  * $lnbinomial(n, k, p, q)) = \ln({n \choose k} p^k q^{n-k})$ */
+// 二项分布取自然对数
 static double lnbinomialpmf(size_t n, size_t k, double p, double q) {
     return lnbino(n, k) + xlny(k, p) + xlny(n - k, q);
 }
-
+// C(w,i)*C(n-w,t-i)/C(n,t) 取对数
 static double Euh_log(size_t n, size_t w, size_t t, size_t i) {
     return lnbino(w, i) + lnbino(n - w, t - i) - lnbino(n, t);
 }

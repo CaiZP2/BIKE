@@ -268,8 +268,8 @@ int BGF_decoder(uint8_t e[R_BITS*2],
         memset(black, 0, R_BITS*2);
         memset(gray, 0, R_BITS*2);
 
-        uint32_t T = floor(VAR_TH_FCT(getHammingWeight(s, R_BITS)));
-        
+        // uint32_t T = floor(VAR_TH_FCT(getHammingWeight(s, R_BITS)));
+        uint32_t T = floor(compute_threshold(R_BITS, N_BITS, DV, 2*DV, getHammingWeight(s, R_BITS), T1));
         BFIter(e, black, gray, s, T, h0_compact, h1_compact, h0_compact_col, h1_compact_col);
 
         if (i == 1)

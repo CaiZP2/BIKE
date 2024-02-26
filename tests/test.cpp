@@ -122,9 +122,12 @@ int main(void)
     // 解密出的向量e
     uint8_t e_dec[N_SIZE] = {0};
 
-    // BIKE-PKE
     // 迭代次数
-    uint32_t iterTime = 5;
+    uint32_t iterTime = 10000;
+    // 解密成功/失败次数
+    uint32_t successTime = 0;
+    uint32_t failTime = 0;
+    // BIKE-PKE
     for(uint32_t i = 0; i < iterTime; i++)
     {
         // 私钥
@@ -208,15 +211,19 @@ int main(void)
         }*/
         std::cout << std::endl;
 
-        // 比较加密信息与解密信息是否一致
+        // 比较加密信息与解密信息是否一致，作为判断解密是否成功的依据
         if(safe_cmp(e, e_dec, N_SIZE))
         {
             std::cout << "Iter" << i+1 << " Success\n" << std::endl;
+            ++successTime;
         } else {
             std::cout << "Iter" << i+1 << " Fail\n" << std::endl;
+            ++failTime;
         }
     }
-    
+
+    std::cout << "Success Time " << successTime << std::endl;
+    std::cout << "Fail Time " << failTime << std::endl;
 
     return 0;
 }
