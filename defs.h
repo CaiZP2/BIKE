@@ -96,7 +96,7 @@
 #define T1     134ULL
 #define VAR_TH_FCT(x) (MAX(13.530 + 0.0069722 * (x), 36))
 // Parameters for BGF Decoder:
-#define tau 3
+#define tau 0
 #define NbIter 5
 #endif
 

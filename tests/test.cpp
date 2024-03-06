@@ -116,6 +116,7 @@ int main(void)
     // 密文 在BIKE-PKE中，主要使用c0
     ct_t ct = {0}; // ciphertext:  (c0, c1)
     // 明文（字节表示）
+    double_seed_t seeds = {0};
     uint8_t m[ELL_SIZE] = {0};
     // 明文转换后的向量e
     uint8_t e[N_SIZE] = {0};
@@ -137,7 +138,9 @@ int main(void)
         // 密文 在BIKE-PKE中，主要使用c0
         ct = {0};
         // 明文（字节表示）
-        memset(m, 0, sizeof(m));
+        get_seeds(&seeds, KEYGEN_SEEDS);
+        memcpy(m, seeds.s1.raw, ELL_SIZE);
+        //memset(m, 0, sizeof(m));
         // 明文转换后的向量e
         memset(e, 0, sizeof(e));
         // 解密出的向量e
@@ -153,7 +156,7 @@ int main(void)
         crypto_pke_dec(e_dec, ct.raw, sk.raw);
 
         // 以下为调试使用
-        uint8_t e0[R_SIZE] = {0};
+        /*uint8_t e0[R_SIZE] = {0};
         uint8_t e1[R_SIZE] = {0};
         uint8_t e0_dec[R_SIZE] = {0};
         uint8_t e1_dec[R_SIZE] = {0};
@@ -181,9 +184,9 @@ int main(void)
         std::vector<uint32_t> h_compact;
         convert2compact_flex(h_compact, pk.val, R_SIZE, R_BITS);
         std::cout << "pk-h, total weight: " << h_compact.size() << std::endl;
-        /*for(auto pos : h_compact) {
-            std::cout << pos << " ";
-        }*/
+        // for(auto pos : h_compact) {
+            // std::cout << pos << " ";
+        // }
         std::cout << std::endl;
 
         // 明文转换后的向量e
@@ -192,36 +195,38 @@ int main(void)
         convert2compact_flex(e0_compact, e0, R_SIZE, R_BITS);
         convert2compact_flex(e1_compact, e1, R_SIZE, R_BITS);
         std::cout << "e0, total weight: " << e0_compact.size() << std::endl;
-        /*for(auto pos : e0_compact) {
+        for(auto pos : e0_compact) {
             std::cout << pos << " ";
-        }*/
+        }
         std::cout << std::endl;
         std::cout << "e1, total weight: " << e1_compact.size() << std::endl;
-        /*for(auto pos : e1_compact) {
+        for(auto pos : e1_compact) {
             std::cout << pos << " ";
-        }*/
+        }
         std::cout << std::endl;
 
         // 密文
         std::vector<uint32_t> c0_compact;
         convert2compact_flex(c0_compact, ct.val0, R_SIZE, R_BITS);
         std::cout << "ct-c0, total weight: " << c0_compact.size() << std::endl;
-        /*for(auto pos : c0_compact) {
+        for(auto pos : c0_compact) {
             std::cout << pos << " ";
-        }*/
-        std::cout << std::endl;
+        }
+        std::cout << std::endl;*/
 
         // 比较加密信息与解密信息是否一致，作为判断解密是否成功的依据
         if(safe_cmp(e, e_dec, N_SIZE))
         {
-            std::cout << "Iter" << i+1 << " Success\n" << std::endl;
+            // std::cout << "Iter" << i+1 << " Success\n" << std::endl;
             ++successTime;
         } else {
-            std::cout << "Iter" << i+1 << " Fail\n" << std::endl;
+            // std::cout << "Iter" << i+1 << " Fail\n" << std::endl;
             ++failTime;
         }
+        printf("\r%d/%d",i,iterTime);
     }
-
+    
+    std::cout << std::endl;
     std::cout << "Success Time " << successTime << std::endl;
     std::cout << "Fail Time " << failTime << std::endl;
 
