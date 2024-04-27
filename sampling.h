@@ -38,6 +38,9 @@
 #ifndef _SAMPLE_H_
 #define _SAMPLE_H_
 
+#include <vector>
+#include <algorithm>
+
 #include "FromNIST/rng.h"
 #include "openssl_utils.h"
 #include "shake_prng.h"
@@ -48,14 +51,6 @@ typedef enum
     MUST_BE_ODD=1
 } must_be_odd_t;
 
-//Generate a random BIGNUM r of length len with a set weight
-//Using the random ctx supplied.
-// 接受字节表示的向量人，二进制表示的向量长度len，汉明重量weight
-// 生成长度为len，汉明重量为weight的向量r
-status_t generate_sparse_rep_keccak(OUT uint8_t* r,
-        IN const uint32_t weight,
-        IN const uint32_t len,
-        IN OUT shake256_prng_state_t *prf_state);
 
 // sample a single number smaller than len.
 // 生成低于len的数randpos：0 =< randpos < len
@@ -63,5 +58,33 @@ status_t get_rand_mod_len_keccak(OUT uint32_t* rand_pos,
         IN const uint32_t len,
         IN OUT shake256_prng_state_t* prf_state);
 
-// 生成第一类弱密钥
+//Generate a random BIGNUM r of length len with a set weight
+//Using the random ctx supplied.
+// 接受字节表示的向量r，二进制表示的向量长度len，汉明重量weight
+// 生成长度为len，汉明重量为weight的向量，并以字节表示的向量r返回。
+status_t generate_sparse_rep_keccak(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN OUT shake256_prng_state_t *prf_state);
+
+// 第一类弱密钥：聚集向量采样
+void generate_weak_one(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const uint32_t gather, 
+        IN OUT shake256_prng_state_t* prf_state);
+// 第二类弱密钥：等距向量采样
+void generate_weak_two(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const uint32_t distance,
+        IN OUT shake256_prng_state_t* prf_state);
+// 第三类弱密钥：相似向量采样
+void generate_weak_three(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const int similar,
+        IN const std::vector<uint32_t> &vec_compact,
+        IN OUT shake256_prng_state_t* prf_state);
+
 #endif //_SAMPLE_H_

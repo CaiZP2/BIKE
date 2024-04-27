@@ -113,5 +113,13 @@ int crypto_pke_enc(OUT unsigned char *ct, IN unsigned char *e, IN unsigned char 
 // 利用sk将ct->val0解密并存进向量e中，向量e为字节表示，ct->val0为字节表示
 int crypto_pke_dec(OUT unsigned char *e, IN unsigned char *ct, IN unsigned char *sk);  
 
+// 生成第一类弱密钥
+void crypto_pke_keygen_weak_one(OUT unsigned char* pk, OUT unsigned char* sk);
+// 生成第二类弱密钥
+void crypto_pke_keygen_weak_two(OUT unsigned char* pk, OUT unsigned char* sk);
+// 生成第三类弱密钥
+void crypto_pke_keygen_weak_three(OUT unsigned char* pk, OUT unsigned char* sk, int similar);
+
+
 #endif //__KEM_H_INCLUDED__
 

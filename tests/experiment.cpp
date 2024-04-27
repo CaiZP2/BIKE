@@ -42,6 +42,7 @@
 #include "ntl.h"
 #include "conversions.h"
 #include "transform.h"
+#include "sampling.h"
 
 
 ////////////////////////////////////////////////////////////////
@@ -55,62 +56,32 @@ int main(void)
     pk_t pk = {0}; // public-key:  (g0, g1)
     // 密文 在BIKE-PKE中，主要使用c0
     ct_t ct = {0}; // ciphertext:  (c0, c1)
-    // 明文（字节表示）
+    // 哈希初始化参数
     double_seed_t seeds = {0};
-    uint8_t m[ELL_SIZE] = {0};
+    shake256_prng_state_t h_prng_state = {0};
+    // 明文（字节表示）
+    // uint8_t m[ELL_SIZE] = {0};
     // 明文转换后的向量e
     uint8_t e[N_SIZE] = {0};
+    uint8_t e0[R_SIZE] = {0};
+    uint8_t e1[R_SIZE] = {0};
     // 解密出的向量e
     uint8_t e_dec[N_SIZE] = {0};
-
     // 迭代次数
     uint32_t iterTime = 0;
-    std::cin >> iterTime;
+    uint32_t requestIterTime = 0;
+    std::cin >> requestIterTime;
     // 解密成功/失败次数
     uint32_t successTime = 0;
     uint32_t failTime = 0;
+    // 期望失败次数
+    uint32_t requestFailTime = 0;
+    // std::cin >> requestFailTime;
 
-    e[0] = 255;
-    e[10] = 255;
-
-    uint8_t e_merge[N_SIZE] = {0};
-    uint8_t e0[R_SIZE] = {0};
-    uint8_t e1[R_SIZE] = {0};
-    ntl_split_polynomial(e0,e1,e);
-    ntl_merge_polynomial(e_merge,e0,e1);
-    if(safe_cmp(e,e_merge,N_SIZE)) {
-        std::cout << "Success" << std::endl;
-    } else {
-        std::cout << "FAIL" << std::endl;
-    }
-    std::vector<uint32_t> e_compact, e_merge_compact, e0_compact, e1_compact;
-    convert2compact_flex(e_compact,e,N_SIZE,N_BITS);
-    convert2compact_flex(e_merge_compact,e_merge,N_SIZE,N_BITS);
-    convert2compact_flex(e0_compact, e0, R_SIZE, R_BITS);
-    convert2compact_flex(e1_compact, e1, R_SIZE, R_BITS);
-    for(auto index : e_compact)
-    {
-        std::cout << index << " ";
-    }
-    std::cout << std::endl;
-    for(auto index : e0_compact)
-    {
-        std::cout << index << " ";
-    }
-    std::cout << std::endl;
-    for(auto index : e1_compact)
-    {
-        std::cout << index << " ";
-    }
-    std::cout << std::endl;
-    for(auto index : e_merge_compact)
-    {
-        std::cout << index << " ";
-    }
-    std::cout << std::endl;
+    int similar = 30;
 
     // BIKE-PKE
-    /*for(uint32_t i = 0; i < iterTime; i++)
+    while(iterTime < requestIterTime)
     {
         // 私钥
         sk = {0};
@@ -119,34 +90,54 @@ int main(void)
         // 密文 在BIKE-PKE中，主要使用c0
         ct = {0};
         // 明文（字节表示）
+        // 哈希初始化
         get_seeds(&seeds, KEYGEN_SEEDS);
-        memcpy(m, seeds.s1.raw, ELL_SIZE);
-        //memset(m, 0, sizeof(m));
+        shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
+        // memcpy(m, seeds.s1.raw, ELL_SIZE);
+        // memset(m, 0, sizeof(m));
         // 明文转换后的向量e
+
+        // e上下部分相同
+        memset(e0, 0, sizeof(e0));
+        memset(e1, 0, sizeof(e1));
         memset(e, 0, sizeof(e));
+
         // 解密出的向量e
         memset(e_dec, 0, sizeof(e_dec));
+
         // Step1 明文转换为e
         // 探讨变化明文，可修改m，也可直接修改e
-        functionH(e, m);
+        // functionH(e, m);
+        generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
+        memcpy(e1, e0, R_SIZE);
+        ntl_merge_polynomial(e, e0, e1);
+        
+        // e完全随机
+        // generate_sparse_rep_keccak(e, T1, N_BITS, &h_prng_state);
+        /*generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
+        generate_sparse_rep_keccak(e1, T1/2, R_BITS, &h_prng_state);
+        ntl_merge_polynomial(e, e0, e1);*/
+        // ntl_split_polynomial(e0, e1, e);
+
         // Step2 密钥生成
-        crypto_pke_keygen(pk.raw, sk.raw);
+        // crypto_pke_keygen(pk.raw, sk.raw);
+        crypto_pke_keygen_weak_three(pk.raw, sk.raw, similar);
         // Step3 加密
         crypto_pke_enc(ct.raw, e, pk.raw);
         // Step4 解密
         crypto_pke_dec(e_dec, ct.raw, sk.raw);
 
         // 以下为调试使用
-        uint8_t e0[R_SIZE] = {0};
+        /*uint8_t e0[R_SIZE] = {0};
         uint8_t e1[R_SIZE] = {0};
         uint8_t e0_dec[R_SIZE] = {0};
         uint8_t e1_dec[R_SIZE] = {0};
         ntl_split_polynomial(e0, e1, e);
-        ntl_split_polynomial(e0_dec, e1_dec, e_dec);
+        ntl_split_polynomial(e0_dec, e1_dec, e_dec);*/
         // 各个参数的1的位置信息
 
         // 私钥
-        std::vector<uint32_t> h0_compact;
+        /*std::vector<uint32_t> h0_compact;
         std::vector<uint32_t> h1_compact;
         convert2compact_flex(h0_compact, sk.val0, R_SIZE, R_BITS);
         convert2compact_flex(h1_compact, sk.val1, R_SIZE, R_BITS);
@@ -159,19 +150,19 @@ int main(void)
         for(auto pos : h1_compact) {
             std::cout << pos << " ";
         }
-        std::cout << std::endl;
+        std::cout << std::endl;*/
 
         // 公钥
-        std::vector<uint32_t> h_compact;
+        /*std::vector<uint32_t> h_compact;
         convert2compact_flex(h_compact, pk.val, R_SIZE, R_BITS);
         std::cout << "pk-h, total weight: " << h_compact.size() << std::endl;
         // for(auto pos : h_compact) {
             // std::cout << pos << " ";
         // }
-        std::cout << std::endl;
+        std::cout << std::endl;*/
 
         // 明文转换后的向量e
-        std::vector<uint32_t> e0_compact;
+        /*std::vector<uint32_t> e0_compact;
         std::vector<uint32_t> e1_compact;
         convert2compact_flex(e0_compact, e0, R_SIZE, R_BITS);
         convert2compact_flex(e1_compact, e1, R_SIZE, R_BITS);
@@ -193,7 +184,7 @@ int main(void)
         for(auto pos : c0_compact) {
             std::cout << pos << " ";
         }
-        std::cout << std::endl;
+        std::cout << std::endl;*/
 
         // 比较加密信息与解密信息是否一致，作为判断解密是否成功的依据
         if(safe_cmp(e, e_dec, N_SIZE))
@@ -204,12 +195,13 @@ int main(void)
             // std::cout << "Iter" << i+1 << " Fail\n" << std::endl;
             ++failTime;
         }
-        printf("\r%d/%d, Fail: %d",i,iterTime, failTime);
+        ++iterTime;
+        printf("\r%d, Fail: %d", iterTime, failTime);
     }
     
     std::cout << std::endl;
     std::cout << "Success Time " << successTime << std::endl;
-    std::cout << "Fail Time " << failTime << std::endl;*/
+    std::cout << "Fail Time " << failTime << std::endl;
 
     return 0;
 }

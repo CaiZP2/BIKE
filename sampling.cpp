@@ -115,3 +115,66 @@ status_t generate_sparse_rep_keccak(OUT uint8_t * r,
     EXIT:
     return res;
 }
+
+void generate_weak_one(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const uint32_t gather, 
+        IN OUT shake256_prng_state_t* prf_state)
+{
+    ;
+}
+
+void generate_weak_two(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const uint32_t distance,
+        IN OUT shake256_prng_state_t* prf_state)
+{
+    ;
+}
+
+void generate_weak_three(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const int similar,
+        IN const std::vector<uint32_t> &vec_compact,
+        IN OUT shake256_prng_state_t* prf_state)
+{
+    uint32_t rand_pos = 0;
+    // 先从原向量中随机抽取similar个位置
+    auto vec_weight = vec_compact.size();
+    int i = 0;
+    while(i != similar)
+    {
+        // 0 <= rand_pos < vec_weight
+        get_rand_mod_len_keccak(&rand_pos, vec_weight, prf_state);
+        if(CHECK_BIT(r,vec_compact[rand_pos])){
+            continue;
+        } else {
+            SET_BIT(r,vec_compact[rand_pos]);
+            ++i;
+        }
+    }
+    // 再随机抽取weight-similar个位置，且不与该原向量重合
+    i = 0;
+    while(i != weight-similar)
+    {
+        // 0 =< rand_pos < len
+        get_rand_mod_len_keccak(&rand_pos, len, prf_state);
+        // 先查是否与原向量重合
+        auto iter = std::find(vec_compact.begin(), vec_compact.end(), rand_pos);
+        if(iter == vec_compact.end()){
+            // 若与原向量没有重合
+            if(CHECK_BIT(r,rand_pos)){
+                continue;
+            } else {
+                SET_BIT(r,rand_pos);
+                ++i;
+            }
+        } else {
+            // 若与原向量重合
+            continue;
+        }
+    }
+}

@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 
 #include "hash_wrapper.h"
 #include "openssl_utils.h"
@@ -291,10 +292,14 @@ int crypto_kem_dec(OUT unsigned char *ss,
     convert2compact(h1_compact, l_sk->val1);
 
     DMSG("  Computing s.\n");
+
     syndrome_t syndrome;
 
     // Step 1. computing syndrome:
     res = compute_syndrome(&syndrome, l_ct, l_sk); CHECK_STATUS(res);
+
+    /*uint32_t weight =  getHammingWeight(syndrome.raw,R_BITS);
+    std::cout << "syndrome weight:" << weight << std::endl;*/
 
     // Step 2. decoding:
     DMSG("  Decoding.\n");
@@ -423,7 +428,6 @@ int crypto_pke_enc(OUT unsigned char *ct, IN unsigned char *e, IN unsigned char 
 
 int crypto_pke_dec(OUT unsigned char *e, IN unsigned char *ct, IN unsigned char *sk)
 {
-    DMSG("  Enter crypto_pke_dec.\n");
 
     // convert to this implementation types
     // 类型转换
@@ -438,7 +442,7 @@ int crypto_pke_dec(OUT unsigned char *e, IN unsigned char *ct, IN unsigned char 
     uint8_t e_tmp1[R_BITS*2] = {0};
 
     // 表示解码成功失败与否
-    int rc;
+    // int rc;
 
     // 私钥中1的位置信息，主要用于BGF解码算法提供临界依据
     DMSG("  Converting to compact rep.\n");
@@ -450,16 +454,72 @@ int crypto_pke_dec(OUT unsigned char *e, IN unsigned char *ct, IN unsigned char 
 
     // Step 1. computing syndrome:
     // ct->val0*h0 = (e0 + e1*h1*inv_h0)*h0 = e0*h0 + e1*h1
-    res = compute_syndrome(&syndrome, l_ct, l_sk); CHECK_STATUS(res);
+    compute_syndrome(&syndrome, l_ct, l_sk);
+
+    uint32_t weight =  getHammingWeight(syndrome.raw,R_BITS);
+    std::cout << "syndrome weight:" << weight << std::endl;
 
     // Step 2. decoding:
     // decode(e0*h0+e1*h1, h0, h1)
-    DMSG("  Decoding.\n");
-    rc = BGF_decoder(e_tmp1, syndrome.raw, h0_compact, h1_compact);
+
+    BGF_decoder(e_tmp1, syndrome.raw, h0_compact, h1_compact);
     // 将二进制表示转为字节表示的e
     convertBinaryToByte(e, e_tmp1, 2*R_BITS);
 
-    EXIT:
-    DMSG("  Exit crypto_kem_dec.\n");
     return res;
+}
+
+void crypto_pke_keygen_weak_one(OUT unsigned char *pk, OUT unsigned char *sk)
+{
+    ;
+}
+
+void crypto_pke_keygen_weak_two(OUT unsigned char* pk, OUT unsigned char* sk)
+{
+    ;
+}
+
+void crypto_pke_keygen_weak_three(OUT unsigned char* pk, OUT unsigned char* sk, int similar)
+{
+    // 类型转换
+    sk_t* l_sk = (sk_t*)sk;
+    pk_t* l_pk = (pk_t*)pk;
+
+    // For NIST DRBG_CTR
+    // 初始化哈希算法的随机种子
+    double_seed_t seeds = {0};
+    shake256_prng_state_t h_prng_state = {0};
+
+    // Get the entropy seeds
+    // 算法随机生成的核心：种子随机生成
+    get_seeds(&seeds, KEYGEN_SEEDS);
+
+    // BIKE-PKE
+    // sk = (h0, h1)
+    uint8_t * h0 = l_sk->val0;
+    uint8_t * h1 = l_sk->val1;
+    // uint8_t * sigma = l_sk->sigma;
+
+    uint8_t inv_h0[R_SIZE] = {0};
+
+
+    // 利用随机种子对哈希进行初始化
+    shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
+    // 利用哈希随机生成私钥
+    // 先生成h0
+    generate_sparse_rep_keccak(h0, DV, R_BITS, &h_prng_state);
+    // 利用h0生成h1
+    std::vector<uint32_t> h0_compact;
+    convert2compact_flex(h0_compact, h0, R_SIZE, R_BITS);
+    generate_weak_three(h1, DV, R_BITS, similar, h0_compact, &h_prng_state);
+    // memcpy(h1, h0, R_SIZE);
+
+    // use the second seed as sigma
+    // memcpy(sigma, seeds.s2.raw, ELL_SIZE);
+
+    // pk = (1, h1*h0^(-1)), the first pk component (1) is implicitly assumed
+    // 公钥生成
+    ntl_mod_inv(inv_h0, h0);
+    ntl_mod_mul(l_pk->val, h1, inv_h0);
+
 }
