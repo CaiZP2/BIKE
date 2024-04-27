@@ -98,14 +98,29 @@ void ntl_mod_mul(OUT uint8_t res_bin[R_SIZE],
 
 void ntl_split_polynomial(OUT uint8_t e0[R_SIZE],
         OUT uint8_t e1[R_SIZE],
-        IN const uint8_t e[2*R_SIZE])
+        IN const uint8_t e[N_SIZE])
 {
     GF2X e_pol, e0_pol, e1_pol;
     GF2XFromBytes(e_pol, e, N_SIZE);
+    //std::cout << e_pol << std::endl;
     trunc(e0_pol, e_pol, R_BITS);
     RightShift(e1_pol, e_pol, R_BITS);
 
     BytesFromGF2X(e0, e0_pol, R_SIZE);
     BytesFromGF2X(e1, e1_pol, R_SIZE);
+}
+
+void ntl_merge_polynomial(OUT uint8_t e[N_SIZE], IN uint8_t e0[R_SIZE], IN uint8_t e1[R_SIZE])
+{
+    GF2X e_pol, e0_pol, e1_pol, e_temp;
+    GF2XFromBytes(e0_pol, e0, R_SIZE);
+    GF2XFromBytes(e1_pol, e1, R_SIZE);
+    //std::cout << e0_pol << std::endl;
+    //std::cout << e1_pol << std::endl;
+    LeftShift(e_temp, e1_pol, R_BITS);
+    add(e_pol, e_temp, e0_pol);
+    //std::cout << e_temp << std::endl;
+    //std::cout << e_pol << std::endl;
+    BytesFromGF2X(e, e_pol, N_SIZE);
 }
 

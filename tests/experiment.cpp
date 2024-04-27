@@ -41,6 +41,7 @@
 #include "measurements.h"
 #include "ntl.h"
 #include "conversions.h"
+#include "transform.h"
 
 
 ////////////////////////////////////////////////////////////////
@@ -69,7 +70,44 @@ int main(void)
     uint32_t successTime = 0;
     uint32_t failTime = 0;
 
+    e[0] = 255;
+    e[10] = 255;
 
+    uint8_t e_merge[N_SIZE] = {0};
+    uint8_t e0[R_SIZE] = {0};
+    uint8_t e1[R_SIZE] = {0};
+    ntl_split_polynomial(e0,e1,e);
+    ntl_merge_polynomial(e_merge,e0,e1);
+    if(safe_cmp(e,e_merge,N_SIZE)) {
+        std::cout << "Success" << std::endl;
+    } else {
+        std::cout << "FAIL" << std::endl;
+    }
+    std::vector<uint32_t> e_compact, e_merge_compact, e0_compact, e1_compact;
+    convert2compact_flex(e_compact,e,N_SIZE,N_BITS);
+    convert2compact_flex(e_merge_compact,e_merge,N_SIZE,N_BITS);
+    convert2compact_flex(e0_compact, e0, R_SIZE, R_BITS);
+    convert2compact_flex(e1_compact, e1, R_SIZE, R_BITS);
+    for(auto index : e_compact)
+    {
+        std::cout << index << " ";
+    }
+    std::cout << std::endl;
+    for(auto index : e0_compact)
+    {
+        std::cout << index << " ";
+    }
+    std::cout << std::endl;
+    for(auto index : e1_compact)
+    {
+        std::cout << index << " ";
+    }
+    std::cout << std::endl;
+    for(auto index : e_merge_compact)
+    {
+        std::cout << index << " ";
+    }
+    std::cout << std::endl;
 
     // BIKE-PKE
     /*for(uint32_t i = 0; i < iterTime; i++)

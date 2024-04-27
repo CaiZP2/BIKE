@@ -50,9 +50,13 @@ void ntl_mod_inv(OUT uint8_t res_bin[R_SIZE],
 void ntl_mod_mul(OUT uint8_t res_bin[R_SIZE],
         IN const uint8_t a_bin[R_SIZE],
         IN const uint8_t b_bin[R_SIZE]);
-
+// 将误差向量e分为e0,e1两部分
 void ntl_split_polynomial(OUT uint8_t e0[R_SIZE],
         OUT uint8_t e1[R_SIZE],
         IN const uint8_t e[2*R_SIZE]);
+// 将e0,e1两部分合并为误差向量e
+void ntl_merge_polynomial(OUT uint8_t e[2*R_SIZE],
+        IN uint8_t e0[R_SIZE],
+        IN uint8_t e1[R_SIZE]);
 
 #endif

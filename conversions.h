@@ -39,6 +39,7 @@
 #ifndef _R_CONVERSIONS_H_
 #define _R_CONVERSIONS_H_
 
+#include "types.h"
 #include <vector>
 
 // 接受二进制表示的in数组,，将其转为字节表示的out数组，length为二进制表示的数组长度
@@ -53,12 +54,13 @@ int convertByteToBinary(uint8_t* out, const uint8_t* in, uint32_t length);
 // 接受字节表示的in数组，将其转为压缩(compact)形式（只存取向量中1的位置信息）
 // 例：in = {00011010,(0000)0101} (二进制表示为{0,1,0,1,1,0,0,0,1,0,1,0})
 // 结果 out = {1,3,4,8,10}
-void convert2compact(OUT uint32_t out[DV], IN const uint8_t in[R_SIZE]);
+void convert2compact(uint32_t out[DV], const uint8_t in[R_SIZE]);
 // 接受字节表示的in数组，输出其1的位置信息out
 // 相比上述函数，采用vector实现，支持更加灵活的向量长度与1的个数
-void convert2compact_flex(OUT std::vector<uint32_t> &out, IN const uint8_t *in, IN uint32_t byteLength, IN uint32_t bitLength);
+void convert2compact_flex(std::vector<uint32_t> &out, const uint8_t *in, uint32_t byteLength, uint32_t bitLength);
 // 接受1的位置信息in，输出二进制表示的out数组
-void convertCompact2Binary(OUT uint8_t* out, IN const std::vector<uint32_t> &in);
+void convertCompact2Binary(uint8_t* out, const std::vector<uint32_t> &in);
 // 接受1的位置信息in，输出字节表示的out数组
-void convertCompact2Byte(OUT uint8_t* out, IN const std::vector<uint32_t> &in);
+void convertCompact2Byte(uint8_t* out, const std::vector<uint32_t> &in);
+
 #endif // _R_CONVERSIONS_H_
