@@ -82,6 +82,23 @@ void convert2compact_flex(OUT std::vector<uint32_t> &out, IN const uint8_t *in, 
     }
 }
 
+void convertCompact2Binary(OUT uint8_t* out, IN const std::vector<uint32_t> &in)
+{
+    for(auto index : in) {
+        out[index] |= 1;
+    }
+}
+
+void convertCompact2Byte(OUT uint8_t* out, IN const std::vector<uint32_t> &in)
+{
+    for(auto index : in) {
+        int i = index / 8;
+        int j = index % 8;
+        out[i] |= (1 << j);
+    }
+}
+
+
 // convert a sequence of uint8_t elements which fully uses all 8-bits of an uint8_t element to
 // a sequence of uint8_t which uses just a single bit per byte (either 0 or 1).
 int convertByteToBinary(uint8_t* out, const uint8_t* in, uint32_t length)

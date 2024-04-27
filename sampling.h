@@ -50,14 +50,18 @@ typedef enum
 
 //Generate a random BIGNUM r of length len with a set weight
 //Using the random ctx supplied.
+// 接受字节表示的向量人，二进制表示的向量长度len，汉明重量weight
+// 生成长度为len，汉明重量为weight的向量r
 status_t generate_sparse_rep_keccak(OUT uint8_t* r,
         IN const uint32_t weight,
         IN const uint32_t len,
         IN OUT shake256_prng_state_t *prf_state);
 
 // sample a single number smaller than len.
+// 生成低于len的数randpos：0 =< randpos < len
 status_t get_rand_mod_len_keccak(OUT uint32_t* rand_pos,
         IN const uint32_t len,
         IN OUT shake256_prng_state_t* prf_state);
 
+// 生成第一类弱密钥
 #endif //_SAMPLE_H_

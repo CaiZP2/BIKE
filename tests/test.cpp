@@ -124,7 +124,8 @@ int main(void)
     uint8_t e_dec[N_SIZE] = {0};
 
     // 迭代次数
-    uint32_t iterTime = 10000;
+    uint32_t iterTime = 1000;
+    std::cin >> iterTime;
     // 解密成功/失败次数
     uint32_t successTime = 0;
     uint32_t failTime = 0;
@@ -203,10 +204,10 @@ int main(void)
         for(auto pos : e1_compact) {
             std::cout << pos << " ";
         }
-        std::cout << std::endl;
+        std::cout << std::endl;*/
 
         // 密文
-        std::vector<uint32_t> c0_compact;
+        /*std::vector<uint32_t> c0_compact;
         convert2compact_flex(c0_compact, ct.val0, R_SIZE, R_BITS);
         std::cout << "ct-c0, total weight: " << c0_compact.size() << std::endl;
         for(auto pos : c0_compact) {
@@ -223,7 +224,7 @@ int main(void)
             // std::cout << "Iter" << i+1 << " Fail\n" << std::endl;
             ++failTime;
         }
-        printf("\r%d/%d",i,iterTime);
+        printf("\r%d/%d, Fail: %d",i,iterTime, failTime);
     }
     
     std::cout << std::endl;

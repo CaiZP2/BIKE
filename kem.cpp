@@ -293,7 +293,7 @@ int crypto_kem_dec(OUT unsigned char *ss,
     DMSG("  Computing s.\n");
     syndrome_t syndrome;
 
-       // Step 1. computing syndrome:
+    // Step 1. computing syndrome:
     res = compute_syndrome(&syndrome, l_ct, l_sk); CHECK_STATUS(res);
 
     // Step 2. decoding:
@@ -346,12 +346,13 @@ int crypto_pke_keygen(OUT unsigned char *pk, OUT unsigned char *sk)
     // return code
     status_t res = SUCCESS;
 
-    //For NIST DRBG_CTR
-    //初始化哈希算法的随机种子
+    // For NIST DRBG_CTR
+    // 初始化哈希算法的随机种子
     double_seed_t seeds = {0};
     shake256_prng_state_t h_prng_state = {0};
 
-    //Get the entropy seeds
+    // Get the entropy seeds
+    // 算法随机生成的核心：种子随机生成
     get_seeds(&seeds, KEYGEN_SEEDS);
 
     // BIKE-PKE
@@ -365,10 +366,11 @@ int crypto_pke_keygen(OUT unsigned char *pk, OUT unsigned char *sk)
     DMSG("  Enter crypto_pke_keygen.\n");
     DMSG("    Calculating the secret key.\n");
 
-    // 哈希初始化
+    // 利用随机种子对哈希进行初始化
     shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
     // 利用哈希随机生成私钥
     res = generate_sparse_rep_keccak(h0, DV, R_BITS, &h_prng_state); CHECK_STATUS(res);
+    // memcpy(h1, h0, R_SIZE);
     res = generate_sparse_rep_keccak(h1, DV, R_BITS, &h_prng_state); CHECK_STATUS(res);
 
     // use the second seed as sigma

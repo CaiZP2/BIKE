@@ -23,10 +23,14 @@ all: bike-nist-kat
 bike-demo-test: $(SRC) *.h tests/test.cpp
 	$(CC) $(CFLAGS) tests/test.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@
 
+experiment: $(SRC) *.h tests/experiment.cpp
+	$(CC) $(CFLAGS) tests/experiment.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@
+
 bike-nist-kat: $(SRC) *.h FromNIST/*.h FromNIST/PQCgenKAT_kem.c
 	$(CC) $(CFLAGS) FromNIST/PQCgenKAT_kem.c $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@
 
 clean:
 	rm -f PQCkemKAT_*
 	rm -f bike*
+	rm -f experiment
 

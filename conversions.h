@@ -57,6 +57,8 @@ void convert2compact(OUT uint32_t out[DV], IN const uint8_t in[R_SIZE]);
 // 接受字节表示的in数组，输出其1的位置信息out
 // 相比上述函数，采用vector实现，支持更加灵活的向量长度与1的个数
 void convert2compact_flex(OUT std::vector<uint32_t> &out, IN const uint8_t *in, IN uint32_t byteLength, IN uint32_t bitLength);
-
-#endif //_R_CONVERSIONS_H_
-
+// 接受1的位置信息in，输出二进制表示的out数组
+void convertCompact2Binary(OUT uint8_t* out, IN const std::vector<uint32_t> &in);
+// 接受1的位置信息in，输出字节表示的out数组
+void convertCompact2Byte(OUT uint8_t* out, IN const std::vector<uint32_t> &in);
+#endif // _R_CONVERSIONS_H_
