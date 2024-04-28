@@ -68,13 +68,30 @@ status_t generate_sparse_rep_keccak(OUT uint8_t* r,
         IN OUT shake256_prng_state_t *prf_state);
 
 // 第一类弱密钥：聚集向量采样
+// 密钥中存在连续gather_f个1
 void generate_weak_one(OUT uint8_t* r,
         IN const uint32_t weight,
         IN const uint32_t len,
-        IN const uint32_t gather, 
+        IN const uint32_t gather_f, 
+        IN OUT shake256_prng_state_t* prf_state);
+// 密钥在长度为gather_m的区间里有weight-out个1
+void generate_weak_gather(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const uint32_t gather_m,
+        IN const uint32_t out,
         IN OUT shake256_prng_state_t* prf_state);
 // 第二类弱密钥：等距向量采样
+// 表示密钥中有等距结构，距离为distance，个数为m
 void generate_weak_two(OUT uint8_t* r,
+        IN const uint32_t weight,
+        IN const uint32_t len,
+        IN const uint32_t distance,
+        IN const uint32_t m,
+        IN OUT shake256_prng_state_t* prf_state);
+// 生成完全等距向量（GJS攻击明文e的结构）
+// weak_two的特殊形式
+void generate_same_distance(OUT uint8_t* r,
         IN const uint32_t weight,
         IN const uint32_t len,
         IN const uint32_t distance,
