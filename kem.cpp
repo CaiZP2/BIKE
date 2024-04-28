@@ -457,7 +457,7 @@ int crypto_pke_dec(OUT unsigned char *e, IN unsigned char *ct, IN unsigned char 
     compute_syndrome(&syndrome, l_ct, l_sk);
 
     uint32_t weight =  getHammingWeight(syndrome.raw,R_BITS);
-    std::cout << "syndrome weight:" << weight << std::endl;
+    // std::cout << "syndrome weight:" << weight << std::endl;
 
     // Step 2. decoding:
     // decode(e0*h0+e1*h1, h0, h1)

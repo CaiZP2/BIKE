@@ -14,6 +14,7 @@ VERBOSE=0
 
 CC:=g++
 CFLAGS:=-m64 -O3
+PARARELL:=-fopenmp
 
 SRC:=*.c *.cpp FromNIST/rng.c
 INCLUDE:=-I. -I$(OpenSSL)/include -L$(OpenSSL)/lib -std=c++11 -lcrypto -lssl -lm -ldl -lntl -lgmp -lgf2x -lpthread
@@ -24,7 +25,7 @@ bike-demo-test: $(SRC) *.h tests/test.cpp
 	$(CC) $(CFLAGS) tests/test.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@
 
 experiment-bike: $(SRC) *.h tests/experiment.cpp
-	$(CC) $(CFLAGS) tests/experiment.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@
+	$(CC) $(PARARELL) $(CFLAGS) tests/experiment.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@
 
 value-evaluation: $(SRC) *.h tests/evaluation.cpp
 	$(CC) $(CFLAGS) tests/evaluation.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@

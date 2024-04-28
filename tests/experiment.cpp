@@ -44,11 +44,12 @@
 #include "transform.h"
 #include "sampling.h"
 
+#include <omp.h>
 
 ////////////////////////////////////////////////////////////////
 //                 Main function for testing
 ////////////////////////////////////////////////////////////////
-int main(void)
+int notmain(void)
 {
     // 私钥
     sk_t sk = {0}; // private-key: (h0, h1)
@@ -203,5 +204,78 @@ int main(void)
     std::cout << "Success Time " << successTime << std::endl;
     std::cout << "Fail Time " << failTime << std::endl;
 
+    return 0;
+}
+
+int main()
+{
+    // 迭代次数
+    uint32_t iterTime = 0;
+    uint32_t requestIterTime = 0;
+    std::cin >> requestIterTime;
+    // 解密成功/失败次数
+    uint32_t successTime = 0;
+    uint32_t failTime = 0;
+    // 期望失败次数
+    uint32_t requestFailTime = 0;
+    // std::cin >> requestFailTime;
+
+    int similar = 25;
+    
+    #pragma omp parallel private(iterTime,failTime)
+    { 
+        while(iterTime < requestIterTime)
+        {
+            // 私钥
+            sk_t sk = {0}; // private-key: (h0, h1)
+            // 公钥
+            pk_t pk = {0}; // public-key:  (g0, g1)
+            // 密文 在BIKE-PKE中，主要使用c0
+            ct_t ct = {0}; // ciphertext:  (c0, c1)
+            // 哈希初始化参数
+            double_seed_t seeds = {0};
+            shake256_prng_state_t h_prng_state = {0};
+            // 明文转换后的向量e
+            uint8_t e[N_SIZE] = {0};
+            uint8_t e0[R_SIZE] = {0};
+            uint8_t e1[R_SIZE] = {0};
+            // 解密出的向量e
+            uint8_t e_dec[N_SIZE] = {0};
+            // 哈希初始化
+            get_seeds(&seeds, KEYGEN_SEEDS);
+            shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
+
+            // Step1 明文生成
+            // e0 e1相同的明文
+            generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
+            memcpy(e1, e0, R_SIZE);
+            ntl_merge_polynomial(e, e0, e1);
+            // e完全随机的明文
+            // generate_sparse_rep_keccak(e, T1, N_BITS, &h_prng_state);
+            /*generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
+            generate_sparse_rep_keccak(e1, T1/2, R_BITS, &h_prng_state);
+            ntl_merge_polynomial(e, e0, e1);*/
+            // ntl_split_polynomial(e0, e1, e);
+
+            // Step2 密钥生成
+            // crypto_pke_keygen(pk.raw, sk.raw);
+            crypto_pke_keygen_weak_three(pk.raw, sk.raw, similar);
+            // Step3 加密
+            crypto_pke_enc(ct.raw, e, pk.raw);
+            // Step4 解密
+            crypto_pke_dec(e_dec, ct.raw, sk.raw);
+
+            // 比较加密信息与解密信息是否一致，作为判断解密是否成功的依据
+            if(safe_cmp(e, e_dec, N_SIZE))
+            {
+                ;
+            } else {
+                // std::cout << "Iter" << i+1 << " Fail\n" << std::endl;
+                ++failTime;
+            }
+            ++iterTime;
+        }
+        printf("Thread %d, Time %d, Fail: %d\n", omp_get_thread_num(), iterTime, failTime);
+    }
     return 0;
 }

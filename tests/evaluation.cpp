@@ -18,7 +18,7 @@ int main()
     outFile << "BIKE Parameter: " << "r = " << r << " d = " << d << " t = " << t << std::endl;
     for(int similar = 3; similar != 40; ++similar)
     {
-        outFile << "Similar " << similar << ":" << log2Choose(r-d,d-similar) + log2Choose(d,similar) + log2(r) - log2Choose(r, d) << std::endl;
+        outFile << similar << "," << log2(r) + log2Choose(r-d,d-similar) + log2Choose(d,similar) - log2Choose(r, d) << std::endl;
     }
     outFile.close();
     return 0;
