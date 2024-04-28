@@ -2,6 +2,7 @@
 *.rsp
 bike-demo-test
 bike-nist-kat
+experiment-bike
+value-evaluation
 .vscode
-experiment
-test
+experiment-data

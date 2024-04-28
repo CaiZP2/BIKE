@@ -154,15 +154,6 @@ void generate_same_distance(OUT uint8_t* r,
     ;
 }
 
-void generate_same_distance(OUT uint8_t* r,
-        IN const uint32_t weight,
-        IN const uint32_t len,
-        IN const uint32_t distance,
-        IN OUT shake256_prng_state_t* prf_state)
-{
-    ;
-}
-
 void generate_weak_three(OUT uint8_t* r,
         IN const uint32_t weight,
         IN const uint32_t len,
