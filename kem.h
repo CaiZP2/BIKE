@@ -119,7 +119,7 @@ void crypto_pke_keygen_weak_one(OUT unsigned char* pk, OUT unsigned char* sk);
 void crypto_pke_keygen_weak_two(OUT unsigned char* pk, OUT unsigned char* sk);
 // 生成第三类弱密钥
 void crypto_pke_keygen_weak_three(OUT unsigned char* pk, OUT unsigned char* sk, int similar);
-
+void crypto_pke_keygen_weak_three_shift(OUT unsigned char* pk, OUT unsigned char* sk, int similar);
 
 #endif //__KEM_H_INCLUDED__
 

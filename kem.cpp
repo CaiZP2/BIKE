@@ -47,6 +47,7 @@
 #include "kem.h"
 #include "shake_prng.h"
 #include "conversions.h"
+#include "transform.h"
 
 // Function H. It uses the extract-then-expand paradigm based on SHA384 and
 // AES256-CTR PRNG to produce e from m.
@@ -498,10 +499,8 @@ void crypto_pke_keygen_weak_three(OUT unsigned char* pk, OUT unsigned char* sk, 
     // sk = (h0, h1)
     uint8_t * h0 = l_sk->val0;
     uint8_t * h1 = l_sk->val1;
-    // uint8_t * sigma = l_sk->sigma;
 
     uint8_t inv_h0[R_SIZE] = {0};
-
 
     // 利用随机种子对哈希进行初始化
     shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
@@ -512,14 +511,57 @@ void crypto_pke_keygen_weak_three(OUT unsigned char* pk, OUT unsigned char* sk, 
     std::vector<uint32_t> h0_compact;
     convert2compact_flex(h0_compact, h0, R_SIZE, R_BITS);
     generate_weak_three(h1, DV, R_BITS, similar, h0_compact, &h_prng_state);
-    // memcpy(h1, h0, R_SIZE);
-
-    // use the second seed as sigma
-    // memcpy(sigma, seeds.s2.raw, ELL_SIZE);
 
     // pk = (1, h1*h0^(-1)), the first pk component (1) is implicitly assumed
     // 公钥生成
     ntl_mod_inv(inv_h0, h0);
     ntl_mod_mul(l_pk->val, h1, inv_h0);
 
+}
+
+void crypto_pke_keygen_weak_three_shift(OUT unsigned char* pk, OUT unsigned char* sk, int similar)
+{
+    // 类型转换
+    sk_t* l_sk = (sk_t*)sk;
+    pk_t* l_pk = (pk_t*)pk;
+
+    // For NIST DRBG_CTR
+    // 初始化哈希算法的随机种子
+    double_seed_t seeds = {0};
+    shake256_prng_state_t h_prng_state = {0};
+
+    // Get the entropy seeds
+    // 算法随机生成的核心：种子随机生成
+    get_seeds(&seeds, KEYGEN_SEEDS);
+
+    // BIKE-PKE
+    // sk = (h0, h1)
+    uint8_t * h0 = l_sk->val0;
+    uint8_t * h1 = l_sk->val1;
+    // uint8_t * sigma = l_sk->sigma;
+
+    // 随机移位前的h1
+    uint8_t h1_shift[R_SIZE] = {0};
+
+    uint8_t inv_h0[R_SIZE] = {0};
+
+    // 利用随机种子对哈希进行初始化
+    shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
+    // 利用哈希随机生成私钥
+    // 先生成h0
+    generate_sparse_rep_keccak(h0, DV, R_BITS, &h_prng_state);
+    // 利用h0生成h1
+    std::vector<uint32_t> h0_compact;
+    convert2compact_flex(h0_compact, h0, R_SIZE, R_BITS);
+    generate_weak_three(h1_shift, DV, R_BITS, similar, h0_compact, &h_prng_state);
+    // 随机选取移位量 0 =< rand_shift < r-1
+    uint32_t rand_shift = 0;
+    get_rand_mod_len_keccak(&rand_shift, R_BITS, &h_prng_state);
+    // 使用rand_shift进行位移
+    transformShift(h1, h1_shift, rand_shift, R_SIZE, R_BITS);
+
+    // pk = (1, h1*h0^(-1)), the first pk component (1) is implicitly assumed
+    // 公钥生成
+    ntl_mod_inv(inv_h0, h0);
+    ntl_mod_mul(l_pk->val, h1, inv_h0);
 }

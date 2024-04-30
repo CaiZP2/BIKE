@@ -211,20 +211,26 @@ int main()
 {
     // 迭代次数
     uint32_t iterTime = 0;
-    uint32_t requestIterTime = 0;
-    std::cin >> requestIterTime;
+    // 最大迭代次数
+    uint32_t requestIterTime = 200000;
+    //std::cout << "INPUT IterTime: ";
+    //std::cin >> requestIterTime;
     // 解密成功/失败次数
     uint32_t successTime = 0;
     uint32_t failTime = 0;
     // 期望失败次数
     uint32_t requestFailTime = 0;
-    // std::cin >> requestFailTime;
+    std::cout << "INPUT FailTime: ";
+    std::cin >> requestFailTime;
 
-    int similar = 25;
+    // 密钥相似度
+    int keySimilar = 28;
+    // 消息相似度
+    int messageSimilar = 28;
     
     #pragma omp parallel private(iterTime,failTime)
     { 
-        while(iterTime < requestIterTime)
+        while(failTime < requestFailTime)
         {
             // 私钥
             sk_t sk = {0}; // private-key: (h0, h1)
@@ -235,6 +241,8 @@ int main()
             // 哈希初始化参数
             double_seed_t seeds = {0};
             shake256_prng_state_t h_prng_state = {0};
+            // 字节表示的明文
+            // uint8_t m[ELL_SIZE] = {0};
             // 明文转换后的向量e
             uint8_t e[N_SIZE] = {0};
             uint8_t e0[R_SIZE] = {0};
@@ -246,22 +254,45 @@ int main()
             shake256_init(seeds.s1.raw, ELL_SIZE, &h_prng_state);
 
             // Step1 明文生成
+
             // e0 e1相同的明文
             generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
             memcpy(e1, e0, R_SIZE);
             ntl_merge_polynomial(e, e0, e1);
+
+            // e0 e1相似的明文，且满足e0 e1的1个数相同
+            /*generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
+            std::vector<uint32_t> e0_compact;
+            convert2compact_flex(e0_compact, e0, R_SIZE, R_BITS);
+            generate_weak_three(e1, T1/2, R_BITS, messageSimilar, e0_compact, &h_prng_state);
+            ntl_merge_polynomial(e, e0, e1);*/
+
             // e完全随机的明文
+
+            // BIKE官方随机明文e生成方法：推荐
+            /*memcpy(m, seeds.s1.raw, ELL_SIZE);
+            functionH(e, m);*/
+
+            // 直接调用随机向量生成函数生成明文e
+            // 根据观察，有更大概率出现e0 e1不均匀，导致解密失败率更高
             // generate_sparse_rep_keccak(e, T1, N_BITS, &h_prng_state);
+
+            // 随机生成e0 e1的1个数相同的明文e
             /*generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
             generate_sparse_rep_keccak(e1, T1/2, R_BITS, &h_prng_state);
             ntl_merge_polynomial(e, e0, e1);*/
-            // ntl_split_polynomial(e0, e1, e);
 
             // Step2 密钥生成
-            // crypto_pke_keygen(pk.raw, sk.raw);
-            crypto_pke_keygen_weak_three(pk.raw, sk.raw, similar);
+
+            // 随机生成密钥
+            crypto_pke_keygen(pk.raw, sk.raw);
+
+            // 生成第三类弱密钥
+            // crypto_pke_keygen_weak_three(pk.raw, sk.raw, keySimilar);
+
             // Step3 加密
             crypto_pke_enc(ct.raw, e, pk.raw);
+
             // Step4 解密
             crypto_pke_dec(e_dec, ct.raw, sk.raw);
 
@@ -273,7 +304,12 @@ int main()
                 // std::cout << "Iter" << i+1 << " Fail\n" << std::endl;
                 ++failTime;
             }
+
             ++iterTime;
+            if(iterTime >= requestIterTime) 
+            {
+                break;
+            }
         }
         printf("Thread %d, Time %d, Fail: %d\n", omp_get_thread_num(), iterTime, failTime);
     }

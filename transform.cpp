@@ -1,7 +1,7 @@
 #include "conversions.h"
 #include "transform.h"
 
-void transformIsomorphism(uint8_t* out, uint8_t* in, int d, int byteLength, int bitLength)
+void transformIsomorphism(uint8_t* out, uint8_t* in, uint32_t d, int byteLength, int bitLength)
 {
     std::vector<uint32_t> in_compact;
     convert2compact_flex(in_compact, in, byteLength, bitLength);
@@ -17,7 +17,7 @@ void transformIsomorphism(uint8_t* out, uint8_t* in, int d, int byteLength, int 
     convertCompact2Byte(out,in_compact);
 }
 
-void transformShift(uint8_t* out, uint8_t* in, int s, int byteLength, int bitLength)
+void transformShift(uint8_t* out, uint8_t* in, uint32_t s, int byteLength, int bitLength)
 {
     std::vector<uint32_t> in_compact;
     convert2compact_flex(in_compact, in, byteLength, bitLength);

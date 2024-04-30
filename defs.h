@@ -91,7 +91,7 @@
 #define NbIter 5
 #elif defined(PARAMTEST)
 // 修改以下参数
-#define R_BITS 12323ULL
+#define R_BITS 9949ULL
 #define DV     71ULL
 #define T1     134ULL
 #define VAR_TH_FCT(x) (MAX(13.530 + 0.0069722 * (x), 36))
