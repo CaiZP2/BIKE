@@ -26,6 +26,7 @@ bike-demo-test: $(SRC) *.h tests/test.cpp
 
 experiment-bike: $(SRC) *.h tests/experiment.cpp
 	$(CC) $(PARARELL) $(CFLAGS) tests/experiment.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@
+	./$@
 
 value-evaluation: $(SRC) *.h tests/evaluation.cpp
 	$(CC) $(CFLAGS) tests/evaluation.cpp $(SRC) $(INCLUDE) -DVERBOSE=$(VERBOSE) -DNIST_RAND=1 -o $@

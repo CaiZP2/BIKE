@@ -212,7 +212,7 @@ int main()
     // 迭代次数
     uint32_t iterTime = 0;
     // 最大迭代次数
-    uint32_t requestIterTime = 200000;
+    uint32_t requestIterTime = 150000;
     //std::cout << "INPUT IterTime: ";
     //std::cin >> requestIterTime;
     // 解密成功/失败次数
@@ -224,9 +224,9 @@ int main()
     std::cin >> requestFailTime;
 
     // 密钥相似度
-    int keySimilar = 28;
+    int keySimilar = 30;
     // 消息相似度
-    int messageSimilar = 28;
+    int messageSimilar = 18;
     
     #pragma omp parallel private(iterTime,failTime)
     { 
@@ -256,16 +256,16 @@ int main()
             // Step1 明文生成
 
             // e0 e1相同的明文
-            generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
+            /*generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
             memcpy(e1, e0, R_SIZE);
-            ntl_merge_polynomial(e, e0, e1);
+            ntl_merge_polynomial(e, e0, e1);*/
 
             // e0 e1相似的明文，且满足e0 e1的1个数相同
-            /*generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
+            generate_sparse_rep_keccak(e0, T1/2, R_BITS, &h_prng_state);
             std::vector<uint32_t> e0_compact;
             convert2compact_flex(e0_compact, e0, R_SIZE, R_BITS);
             generate_weak_three(e1, T1/2, R_BITS, messageSimilar, e0_compact, &h_prng_state);
-            ntl_merge_polynomial(e, e0, e1);*/
+            ntl_merge_polynomial(e, e0, e1);
 
             // e完全随机的明文
 
@@ -285,10 +285,10 @@ int main()
             // Step2 密钥生成
 
             // 随机生成密钥
-            crypto_pke_keygen(pk.raw, sk.raw);
+            // crypto_pke_keygen(pk.raw, sk.raw);
 
             // 生成第三类弱密钥
-            // crypto_pke_keygen_weak_three(pk.raw, sk.raw, keySimilar);
+            crypto_pke_keygen_weak_three(pk.raw, sk.raw, keySimilar);
 
             // Step3 加密
             crypto_pke_enc(ct.raw, e, pk.raw);
