@@ -122,7 +122,29 @@ void generate_weak_one(OUT uint8_t* r,
         IN const uint32_t gather, 
         IN OUT shake256_prng_state_t* prf_state)
 {
-    ;
+    uint32_t rand_pos = 0;
+    int i = 0;
+    // 先生成连续的gather个1
+    while(i != gather)
+    {
+        SET_BIT(r,rand_pos);
+        ++rand_pos;
+        ++i;
+    }
+    // 再生成其他weight-gather个1
+    i = 0;
+    while(i != weight - gather)
+    {
+        // 先生成 0 =< rand_pos < len - gather
+        // 再移动至 rand_pos + gather
+        get_rand_mod_len_keccak(&rand_pos, len - gather, prf_state);
+        if(CHECK_BIT(r, rand_pos + gather)){
+            continue;
+        } else {
+            SET_BIT(r, rand_pos + gather);
+            ++i;
+        }
+    }
 }
 
 void generate_weak_gather(OUT uint8_t* r,
@@ -132,7 +154,31 @@ void generate_weak_gather(OUT uint8_t* r,
         IN const uint32_t out,
         IN OUT shake256_prng_state_t* prf_state)
 {
-    ;
+    uint32_t rand_pos = 0;
+    int i = 0;
+    // 先在[0,gather_m)中生成weight-out个1
+    while(i != weight - out)
+    {
+        get_rand_mod_len_keccak(&rand_pos, gather_m, prf_state);
+        if(CHECK_BIT(r, rand_pos)){
+            continue;
+        } else {
+            SET_BIT(r, rand_pos);
+            ++i;
+        }
+    }
+    // 再在[gather_m,len)中生成out个1
+    i = 0;
+    while(i != out)
+    {
+        get_rand_mod_len_keccak(&rand_pos, len - gather_m, prf_state);
+        if(CHECK_BIT(r, rand_pos + gather_m)){
+            continue;
+        } else {
+            SET_BIT(r, rand_pos + gather_m);
+            ++i;
+        }
+    }
 }
 
 void generate_weak_two(OUT uint8_t* r,
